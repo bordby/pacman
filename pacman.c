@@ -13,9 +13,9 @@ struct Pacman {
 	char direction;
 };
 
-char collision(struct Pacman *pacman, SDL_FRect *tiles, int numberOfTiles){
+char collision(struct Pacman *pacman, char direction, SDL_FRect *tiles, int numberOfTiles){
 	float x = pacman->rect.x, y = pacman->rect.y;
-	switch(pacman->direction){
+	switch(direction){
 		case 'l':
 			x += MOVE;
 			for(int i = 0; i < numberOfTiles; i++){
@@ -80,11 +80,15 @@ int main(void){
 	int numberOfTiles = 0;
 
 	tiles->x = 200; tiles->y = 200; tiles->w = TILESIZE; tiles->h = TILESIZE;
+	(tiles + 1)->x = 200; (tiles + 1)->y = 200 + TILESIZE; 
+	numberOfTiles++;
+	(tiles + 1)->w = TILESIZE; (tiles + 1)->h = TILESIZE;
 	numberOfTiles++;
 	
 
 	SDL_Event event;
 	char loopRun = 1, speed = 3, speedIndex = 0;
+	char bufferDirection = 'o';
 	while(loopRun){
 		while(SDL_PollEvent(&event)){
 			if(event.type == SDL_EVENT_QUIT){
@@ -93,21 +97,24 @@ int main(void){
 			else if(event.type == SDL_EVENT_KEY_DOWN)
 				switch(event.key.key){
 					case SDLK_L:
-						pacman->direction = 'l';
+						bufferDirection = 'l';
 						break;
 					case SDLK_K:
-						pacman->direction = 'k';
+						bufferDirection = 'k';
 						break;
 					case SDLK_J:
-						pacman->direction = 'j';
+						bufferDirection = 'j';
 						break;
 					case SDLK_H:
-						pacman->direction = 'h';
+						bufferDirection = 'h';
 						break;
 				}
 		}
 		if(speedIndex > speed){
-			if(!collision(pacman, tiles, numberOfTiles))
+			if(!collision(pacman, bufferDirection, tiles, numberOfTiles))
+				pacman->direction = bufferDirection;
+			
+			if(!collision(pacman, pacman->direction, tiles, numberOfTiles))
 			switch(pacman->direction){
 				case 'l':
 					pacman->rect.x += MOVE;
