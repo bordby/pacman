@@ -81,8 +81,11 @@ int main(void){
 
 	tiles->x = 200; tiles->y = 200; tiles->w = TILESIZE; tiles->h = TILESIZE;
 	(tiles + 1)->x = 200; (tiles + 1)->y = 200 + TILESIZE; 
-	numberOfTiles++;
 	(tiles + 1)->w = TILESIZE; (tiles + 1)->h = TILESIZE;
+	numberOfTiles++;
+	numberOfTiles++;
+	(tiles + 2)->x = 200 + TILESIZE; (tiles + 2)->y = 200; 
+	(tiles + 2)->w = TILESIZE; (tiles + 2)->h = TILESIZE;
 	numberOfTiles++;
 	
 
