@@ -52,6 +52,29 @@ char collision(struct Pacman *pacman, char direction, SDL_FRect *tiles, int numb
 	return 0;
 }
 
+void addTile(SDL_FRect tiles[], int *numberOfTiles, int coordinates){
+	(tiles + *numberOfTiles)->x = coordinates % 1000;
+	(tiles + *numberOfTiles)->y = coordinates / 1000;
+	(tiles + *numberOfTiles)->w = TILESIZE;
+	(tiles + *numberOfTiles)->h = TILESIZE;
+	(*numberOfTiles)++;
+}
+
+void initTiles(SDL_FRect tiles[], int *numberOfTiles){
+	int tileLocations[] = {
+		0, 40, 80, 120
+	};
+	*numberOfTiles = 0;
+	int size = sizeof(tileLocations) / sizeof(tileLocations[0]);
+	for(int i = 0; i < size; i++){
+		(tiles + *numberOfTiles)->x = tileLocations[i] % 1000;
+		(tiles + *numberOfTiles)->y = tileLocations[i] / 1000;
+		(tiles + *numberOfTiles)->w = TILESIZE;
+		(tiles + *numberOfTiles)->h = TILESIZE;
+		(*numberOfTiles)++;
+	}
+}
+
 int main(void){
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -71,7 +94,7 @@ int main(void){
 
 	struct Pacman *pacman;
 	pacman = malloc(sizeof(struct Pacman));
-	pacman->rect.x = 0;        pacman->rect.y = 0; 
+	pacman->rect.x = 40;        pacman->rect.y = 40; 
 	pacman->rect.w = TILESIZE; pacman->rect.h = TILESIZE;
 	pacman->direction = 'o';
 
@@ -79,19 +102,13 @@ int main(void){
 	SDL_FRect tiles[(RESX * RESY) / (TILESIZE * TILESIZE)];
 	int numberOfTiles = 0;
 
-	tiles->x = 200; tiles->y = 200; tiles->w = TILESIZE; tiles->h = TILESIZE;
-	numberOfTiles++;
-	(tiles + 1)->x = 200; (tiles + 1)->y = 200 + TILESIZE; 
-	(tiles + 1)->w = TILESIZE; (tiles + 1)->h = TILESIZE;
-	numberOfTiles++;
-	(tiles + 2)->x = 200 + TILESIZE; (tiles + 2)->y = 200; 
-	(tiles + 2)->w = TILESIZE; (tiles + 2)->h = TILESIZE;
-	numberOfTiles++;
-	
+	initTiles(tiles, &numberOfTiles);
 
 	SDL_Event event;
 	char loopRun = 1, speed = 3, speedIndex = 0;
 	char bufferDirection = 'o';
+	float mouseX = 0, mouseY = 0;
+	int IMouseX = 0, IMouseY = 0;
 	while(loopRun){
 		while(SDL_PollEvent(&event)){
 			if(event.type == SDL_EVENT_QUIT){
@@ -112,6 +129,16 @@ int main(void){
 						bufferDirection = 'h';
 						break;
 				}
+			else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP){
+				SDL_GetMouseState(&mouseX, &mouseY);
+				IMouseX = mouseX / TILESIZE;
+				IMouseY = mouseY / TILESIZE;
+
+				IMouseX *= TILESIZE;
+				IMouseY *= TILESIZE;
+				printf("x: %d, y: %d\n", IMouseX, IMouseY);
+				addTile(tiles, &numberOfTiles, IMouseY * 1000 + IMouseX);
+			}
 		}
 		if(speedIndex > speed){
 			if(!collision(pacman, bufferDirection, tiles, numberOfTiles))
