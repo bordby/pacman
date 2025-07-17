@@ -52,30 +52,68 @@ char collision(struct Pacman *pacman, char direction, SDL_FRect *tiles, int numb
 	return 0;
 }
 
-void addTile(SDL_FRect tiles[], int *numberOfTiles, int coordinates){
-	(tiles + *numberOfTiles)->x = coordinates % 1000;
-	(tiles + *numberOfTiles)->y = coordinates / 1000;
+char addTile(SDL_FRect tiles[], int *numberOfTiles, int coordinates){
+	float x, y;
+	x = coordinates % 1000;
+	y = coordinates / 1000;
+	for(int i = 0; i < *numberOfTiles; i++){
+		if( ((tiles + i)->x == x) && ((tiles + i)->y == y)){
+			return 0;
+		}
+
+	}
+	(tiles + *numberOfTiles)->x = x;
+	(tiles + *numberOfTiles)->y = y;
 	(tiles + *numberOfTiles)->w = TILESIZE;
 	(tiles + *numberOfTiles)->h = TILESIZE;
-	printf("x: %f, y: %f\n", (tiles + *numberOfTiles)->x, (tiles + *numberOfTiles)->y);
 	(*numberOfTiles)++;
+	return 1;
 }
 
-void initTiles(SDL_FRect tiles[], int *numberOfTiles){
-	int tileLocations[] = {
-		0, 40, 80, 120
-	};
+void saveTiles(SDL_FRect tiles[], int *numberOfTiles){
+	FILE *fptr = NULL;
+
+	fptr = fopen("tiles.by", "w");
+
+	if(fptr == NULL){
+		printf("File cannot be opened\n");
+		return;
+	}
+
+	for(int i = 0; i < *numberOfTiles; i++){
+		fprintf(fptr, "%d\n", (int)((tiles + i)->y * 1000 + (tiles + i)->x));
+	}
+	fprintf(fptr, "%d\n", -1);
+
+	fclose(fptr);
+}
+
+void loadTiles(SDL_FRect tiles[], int *numberOfTiles){
+	FILE *fptr = NULL;
+
+	fptr = fopen("tiles.by", "r");
+
+	if(fptr == NULL){
+		printf("File cannot be opened\n");
+		return;
+	}
+
+	int coordinates;
 	*numberOfTiles = 0;
-	int size = sizeof(tileLocations) / sizeof(tileLocations[0]);
-	for(int i = 0; i < size; i++){
-		(tiles + *numberOfTiles)->x = tileLocations[i] % 1000;
-		(tiles + *numberOfTiles)->y = tileLocations[i] / 1000;
-		(tiles + *numberOfTiles)->w = TILESIZE;
-		(tiles + *numberOfTiles)->h = TILESIZE;
+	for(int i = 0; i < (RESX / TILESIZE) * (RESY / TILESIZE); i++){
+		fscanf(fptr, "%d", &coordinates);
+		if(coordinates < 0)
+			break;
+
+		(tiles + i)->x = coordinates % 1000;
+		(tiles + i)->y = coordinates / 1000;
+		(tiles + i)->w = TILESIZE;
+		(tiles + i)->h = TILESIZE;
 		(*numberOfTiles)++;
 	}
-}
 
+	fclose(fptr);
+}
 int main(void){
 	SDL_Init(SDL_INIT_VIDEO);
 
@@ -100,10 +138,10 @@ int main(void){
 	pacman->direction = 'o';
 
 
-	SDL_FRect tiles[(RESX * RESY) / (TILESIZE * TILESIZE)];
+	SDL_FRect tiles[(RESX / TILESIZE) * (RESY / TILESIZE)];
 	int numberOfTiles = 0;
 
-	initTiles(tiles, &numberOfTiles);
+	loadTiles(tiles, &numberOfTiles);
 
 	SDL_Event event;
 	char loopRun = 1, speed = 3, speedIndex = 0;
@@ -129,8 +167,14 @@ int main(void){
 					case SDLK_H:
 						bufferDirection = 'h';
 						break;
+					case SDLK_S:
+						saveTiles(tiles, &numberOfTiles);
+						break;
+					case SDLK_X:
+						loopRun = 0;
+						break;
 				}
-			else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP){
+			else if(event.type == SDL_EVENT_MOUSE_BUTTON_DOWN){
 				SDL_GetMouseState(&mouseX, &mouseY);
 				mouseX = ((int)mouseX / TILESIZE);
 				mouseY = ((int)mouseY / TILESIZE);
