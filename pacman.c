@@ -57,6 +57,7 @@ void addTile(SDL_FRect tiles[], int *numberOfTiles, int coordinates){
 	(tiles + *numberOfTiles)->y = coordinates / 1000;
 	(tiles + *numberOfTiles)->w = TILESIZE;
 	(tiles + *numberOfTiles)->h = TILESIZE;
+	printf("x: %f, y: %f\n", (tiles + *numberOfTiles)->x, (tiles + *numberOfTiles)->y);
 	(*numberOfTiles)++;
 }
 
@@ -131,13 +132,12 @@ int main(void){
 				}
 			else if(event.type == SDL_EVENT_MOUSE_BUTTON_UP){
 				SDL_GetMouseState(&mouseX, &mouseY);
-				IMouseX = mouseX / TILESIZE;
-				IMouseY = mouseY / TILESIZE;
+				mouseX = ((int)mouseX / TILESIZE);
+				mouseY = ((int)mouseY / TILESIZE);
 
-				IMouseX *= TILESIZE;
-				IMouseY *= TILESIZE;
-				printf("x: %d, y: %d\n", IMouseX, IMouseY);
-				addTile(tiles, &numberOfTiles, IMouseY * 1000 + IMouseX);
+				mouseX *= TILESIZE;
+				mouseY *= TILESIZE;
+				addTile(tiles, &numberOfTiles, mouseY * 1000 + mouseX);
 			}
 		}
 		if(speedIndex > speed){
