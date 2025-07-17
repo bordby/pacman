@@ -60,7 +60,6 @@ char addTile(SDL_FRect tiles[], int *numberOfTiles, int coordinates){
 		if( ((tiles + i)->x == x) && ((tiles + i)->y == y)){
 			return 0;
 		}
-
 	}
 	(tiles + *numberOfTiles)->x = x;
 	(tiles + *numberOfTiles)->y = y;
@@ -143,6 +142,13 @@ int main(void){
 
 	loadTiles(tiles, &numberOfTiles);
 
+	SDL_FRect fruits[(RESX / TILESIZE) * (RESY / TILESIZE)];
+	int numberOfFruits = 0;
+
+	fruits->x = 720 + ( TILESIZE * 3 / 8); fruits->y = 40 + (TILESIZE * 3 / 8); 
+	fruits->w = TILESIZE / 4; fruits->h = TILESIZE / 4;
+	numberOfFruits++;
+
 	SDL_Event event;
 	char loopRun = 1, speed = 3, speedIndex = 0;
 	char bufferDirection = 'o';
@@ -215,6 +221,10 @@ int main(void){
 		for(int i = 0; i < numberOfTiles; i++){
 			SDL_SetRenderDrawColor(renderer, 20, 100, 255, 0);
 			SDL_RenderFillRect(renderer, tiles + i);
+		}
+		for(int i = 0; i < numberOfFruits; i++){
+			SDL_SetRenderDrawColor(renderer, 200, 200, 255, 0);
+			SDL_RenderFillRect(renderer, fruits + i);
 		}
 
 
