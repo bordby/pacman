@@ -13,63 +13,93 @@ struct Pacman {
 	char direction;
 };
 
-char collision(struct Pacman *pacman, char direction, SDL_FRect *tiles, int numberOfTiles){
+struct Tiles {
+	SDL_FRect rects[(RESX / TILESIZE) * (RESY / TILESIZE)];
+	int count;
+};
+
+struct Fruits {
+	SDL_FRect rects[(RESX / TILESIZE) * (RESY / TILESIZE)];
+	int count;
+};
+
+char collision(struct Pacman *pacman, char direction, struct Tiles *tiles, struct Fruits *fruits){
 	float x = pacman->rect.x, y = pacman->rect.y;
 	switch(direction){
 		case 'l':
 			x += MOVE;
-			for(int i = 0; i < numberOfTiles; i++){
-				if(((x + TILESIZE) > (tiles + i)->x) && (x < (tiles +i)->x))
-					if(((y + TILESIZE) > (tiles + i)->y ) && (y < ((tiles + i)->y + TILESIZE)))
+			for(int i = 0; i < tiles->count; i++){
+				if(((x + TILESIZE) > (tiles->rects + i)->x) && (x < (tiles->rects +i)->x))
+					if(((y + TILESIZE) > (tiles->rects + i)->y ) && (y < ((tiles->rects + i)->y + TILESIZE)))
 						return 1;
+			}
+			for(int i = 0; i < fruits->count; i++){
+				if(((x + TILESIZE) > (fruits->rects + i)->x) && (x < (fruits->rects +i)->x))
+					if(((y + TILESIZE) > (fruits->rects + i)->y ) && (y < ((fruits->rects + i)->y + TILESIZE)))
+						return 2;
 			}
 			break;
 		case 'k':
 			y -= MOVE;
-			for(int i = 0; i < numberOfTiles; i++){
-				if((y < ((tiles + i)->y + TILESIZE)) && (y > (tiles + i)->y))
-					if(((x + TILESIZE) > (tiles + i)->x) && (x < ((tiles +i)->x + TILESIZE)))
+			for(int i = 0; i < tiles->count; i++){
+				if((y < ((tiles->rects + i)->y + TILESIZE)) && (y > (tiles->rects + i)->y))
+					if(((x + TILESIZE) > (tiles->rects + i)->x) && (x < ((tiles->rects +i)->x + TILESIZE)))
 						return 1;
+			}
+			for(int i = 0; i < fruits->count; i++){
+				if((y < ((fruits->rects + i)->y + TILESIZE)) && (y > (fruits->rects + i)->y))
+					if(((x + TILESIZE) > (fruits->rects + i)->x) && (x < ((fruits->rects +i)->x + TILESIZE)))
+						return 2;
 			}
 			break;
 		case 'j':
 			y += MOVE;
-			for(int i = 0; i < numberOfTiles; i++){
-				if(((y + TILESIZE) > (tiles + i)->y ) && (y < ((tiles + i)->y)))
-					if(((x + TILESIZE) > (tiles + i)->x) && (x < ((tiles +i)->x + TILESIZE)))
+			for(int i = 0; i < tiles->count; i++){
+				if(((y + TILESIZE) > (tiles->rects + i)->y ) && (y < ((tiles->rects + i)->y)))
+					if(((x + TILESIZE) > (tiles->rects + i)->x) && (x < ((tiles->rects +i)->x + TILESIZE)))
 						return 1;
+			}
+			for(int i = 0; i < fruits->count; i++){
+				if(((y + TILESIZE) > (fruits->rects + i)->y ) && (y < ((fruits->rects + i)->y)))
+					if(((x + TILESIZE) > (fruits->rects + i)->x) && (x < ((fruits->rects +i)->x + TILESIZE)))
+						return 2;
 			}
 			break;
 		case 'h':
 			x -= MOVE;
-			for(int i = 0; i < numberOfTiles; i++){
-				if((x < ((tiles + i)->x + TILESIZE)) && (x > (tiles +i)->x))
-					if(((y + TILESIZE) > (tiles + i)->y ) && (y < ((tiles + i)->y + TILESIZE)))
+			for(int i = 0; i < tiles->count; i++){
+				if((x < ((tiles->rects + i)->x + TILESIZE)) && (x > (tiles->rects +i)->x))
+					if(((y + TILESIZE) > (tiles->rects + i)->y ) && (y < ((tiles->rects + i)->y + TILESIZE)))
 						return 1;
+			}
+			for(int i = 0; i < fruits->count; i++){
+				if((x < ((fruits->rects + i)->x + TILESIZE)) && (x > (fruits->rects +i)->x))
+					if(((y + TILESIZE) > (fruits->rects + i)->y ) && (y < ((fruits->rects + i)->y + TILESIZE)))
+						return 2;
 			}
 			break;
 	}
 	return 0;
 }
 
-char addTile(SDL_FRect tiles[], int *numberOfTiles, int coordinates){
+char addTile(struct Tiles *tiles, int coordinates){
 	float x, y;
 	x = coordinates % 1000;
 	y = coordinates / 1000;
-	for(int i = 0; i < *numberOfTiles; i++){
-		if( ((tiles + i)->x == x) && ((tiles + i)->y == y)){
-			return 0;
+	for(int i = 0; i < tiles->count; i++){
+		if( ((tiles->rects + i)->x == x) && ((tiles->rects + i)->y == y)){
+			return 1;
 		}
 	}
-	(tiles + *numberOfTiles)->x = x;
-	(tiles + *numberOfTiles)->y = y;
-	(tiles + *numberOfTiles)->w = TILESIZE;
-	(tiles + *numberOfTiles)->h = TILESIZE;
-	(*numberOfTiles)++;
-	return 1;
+	(tiles->rects + tiles->count)->x = x;
+	(tiles->rects + tiles->count)->y = y;
+	(tiles->rects + tiles->count)->w = TILESIZE;
+	(tiles->rects + tiles->count)->h = TILESIZE;
+	(tiles->count)++;
+	return 0;
 }
 
-void saveTiles(SDL_FRect tiles[], int *numberOfTiles){
+void saveTiles(struct Tiles *tiles){
 	FILE *fptr = NULL;
 
 	fptr = fopen("tiles.by", "w");
@@ -79,15 +109,15 @@ void saveTiles(SDL_FRect tiles[], int *numberOfTiles){
 		return;
 	}
 
-	for(int i = 0; i < *numberOfTiles; i++){
-		fprintf(fptr, "%d\n", (int)((tiles + i)->y * 1000 + (tiles + i)->x));
+	for(int i = 0; i < tiles->count; i++){
+		fprintf(fptr, "%d\n", (int)((tiles->rects + i)->y * 1000 + (tiles->rects + i)->x));
 	}
 	fprintf(fptr, "%d\n", -1);
 
 	fclose(fptr);
 }
 
-void loadTiles(SDL_FRect tiles[], int *numberOfTiles){
+void loadTiles(struct Tiles *tiles){
 	FILE *fptr = NULL;
 
 	fptr = fopen("tiles.by", "r");
@@ -98,17 +128,17 @@ void loadTiles(SDL_FRect tiles[], int *numberOfTiles){
 	}
 
 	int coordinates;
-	*numberOfTiles = 0;
+	tiles->count = 0;
 	for(int i = 0; i < (RESX / TILESIZE) * (RESY / TILESIZE); i++){
 		fscanf(fptr, "%d", &coordinates);
 		if(coordinates < 0)
 			break;
 
-		(tiles + i)->x = coordinates % 1000;
-		(tiles + i)->y = coordinates / 1000;
-		(tiles + i)->w = TILESIZE;
-		(tiles + i)->h = TILESIZE;
-		(*numberOfTiles)++;
+		(tiles->rects + i)->x = coordinates % 1000;
+		(tiles->rects + i)->y = coordinates / 1000;
+		(tiles->rects + i)->w = TILESIZE;
+		(tiles->rects + i)->h = TILESIZE;
+		(tiles->count)++;
 	}
 
 	fclose(fptr);
@@ -137,17 +167,19 @@ int main(void){
 	pacman->direction = 'o';
 
 
-	SDL_FRect tiles[(RESX / TILESIZE) * (RESY / TILESIZE)];
-	int numberOfTiles = 0;
+	struct Tiles *tiles = malloc(sizeof(struct Tiles)); 
+	tiles->count = 0;
 
-	loadTiles(tiles, &numberOfTiles);
+	struct Fruits *fruits = malloc(sizeof(struct Fruits)); 
+	fruits->count = 0;
 
-	SDL_FRect fruits[(RESX / TILESIZE) * (RESY / TILESIZE)];
-	int numberOfFruits = 0;
+	loadTiles(tiles);
 
-	fruits->x = 720 + ( TILESIZE * 3 / 8); fruits->y = 40 + (TILESIZE * 3 / 8); 
-	fruits->w = TILESIZE / 4; fruits->h = TILESIZE / 4;
-	numberOfFruits++;
+
+	fruits->rects->x = 720; fruits->rects->y = 40; 
+	// + ( TILESIZE * 3 / 8)         + (TILESIZE * 3 / 8) 
+	fruits->rects->w = TILESIZE / 4; fruits->rects->h = TILESIZE / 4;
+	fruits->count = 1;
 
 	SDL_Event event;
 	char loopRun = 1, speed = 3, speedIndex = 0;
@@ -174,7 +206,7 @@ int main(void){
 						bufferDirection = 'h';
 						break;
 					case SDLK_S:
-						saveTiles(tiles, &numberOfTiles);
+						saveTiles(tiles);
 						break;
 					case SDLK_X:
 						loopRun = 0;
@@ -187,26 +219,32 @@ int main(void){
 
 				mouseX *= TILESIZE;
 				mouseY *= TILESIZE;
-				addTile(tiles, &numberOfTiles, mouseY * 1000 + mouseX);
+				addTile(tiles, mouseY * 1000 + mouseX);
 			}
 		}
 		if(speedIndex > speed){
-			if(!collision(pacman, bufferDirection, tiles, numberOfTiles))
+			if(collision(pacman, bufferDirection, tiles, fruits) != 1)
 				pacman->direction = bufferDirection;
 			
-			if(!collision(pacman, pacman->direction, tiles, numberOfTiles))
-			switch(pacman->direction){
-				case 'l':
-					pacman->rect.x += MOVE;
+			switch(collision(pacman, pacman->direction, tiles, fruits)){
+				case 0:
+					switch(pacman->direction){
+						case 'l':
+							pacman->rect.x += MOVE;
+							break;
+						case 'k':
+							pacman->rect.y -= MOVE;
+							break;
+						case 'j':
+							pacman->rect.y += MOVE;
+							break;
+						case 'h':
+							pacman->rect.x -= MOVE;
+							break;
+					}
 					break;
-				case 'k':
-					pacman->rect.y -= MOVE;
-					break;
-				case 'j':
-					pacman->rect.y += MOVE;
-					break;
-				case 'h':
-					pacman->rect.x -= MOVE;
+				case 2:
+					printf("Hit the fruit!\n");
 					break;
 			}
 			speedIndex = 0;
@@ -218,13 +256,13 @@ int main(void){
 		SDL_SetRenderDrawColor(renderer, 255, 255, 0, 0);
 		SDL_RenderFillRect(renderer, &(pacman->rect));
 
-		for(int i = 0; i < numberOfTiles; i++){
+		for(int i = 0; i < tiles->count; i++){
 			SDL_SetRenderDrawColor(renderer, 20, 100, 255, 0);
-			SDL_RenderFillRect(renderer, tiles + i);
+			SDL_RenderFillRect(renderer, tiles->rects + i);
 		}
-		for(int i = 0; i < numberOfFruits; i++){
+		for(int i = 0; i < fruits->count; i++){
 			SDL_SetRenderDrawColor(renderer, 200, 200, 255, 0);
-			SDL_RenderFillRect(renderer, fruits + i);
+			SDL_RenderFillRect(renderer, fruits->rects + i);
 		}
 
 
